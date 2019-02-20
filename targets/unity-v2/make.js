@@ -377,8 +377,12 @@ function getAuthParams(apiCall) {
 }
 
 function getRequestActions(tabbing, apiCall) {
+
+    var output = "";
+
     if (apiCall.name === "GetEntityToken")
-        return tabbing + "AuthType authType = AuthType.None;\n" +
+        output +=
+            tabbing + "AuthType authType = AuthType.None;\n" +
             "#if !DISABLE_PLAYFABCLIENT_API\n" +
             tabbing + "if (authType == AuthType.None && PlayFabClientAPI.IsClientLoggedIn())\n" +
             tabbing + "    authType = AuthType.LoginSession;\n" +
@@ -388,13 +392,23 @@ function getRequestActions(tabbing, apiCall) {
             tabbing + "    authType = AuthType.DevSecretKey;\n" +
             "#endif\n";
 
+    if (apiCall.name === "ExecuteFunction")
+        output += 
+            tabbing + "var debugUri = PlayFabUtil.GetLocalSettingsFileProperty(\"ExecuteFunctionDebugUri\");\n" +
+            tabbing + "if (!string.IsNullOrEmpty(debugUri))\n" +
+            tabbing + "{\n" +
+            tabbing + "\tPlayFabHttp.DebugApiCall(debugUri, request, AuthType.EntityToken, resultCallback, errorCallback, customData, extraHeaders);\n" +
+            tabbing + "\treturn;\n" + 
+            tabbing + "}\n";
+            
+
     if (apiCall.result === "LoginResult" || apiCall.request === "RegisterPlayFabUserRequest")
-        return tabbing + "request.TitleId = request.TitleId ?? PlayFabSettings.TitleId;\n";
+        output += tabbing + "request.TitleId = request.TitleId ?? PlayFabSettings.TitleId;\n";
     if (apiCall.auth === "SessionTicket")
-        return tabbing + "if (!IsClientLoggedIn()) throw new PlayFabException(PlayFabExceptionCode.NotLoggedIn,\"Must be logged in to call this method\");\n";
+        output += tabbing + "if (!IsClientLoggedIn()) throw new PlayFabException(PlayFabExceptionCode.NotLoggedIn,\"Must be logged in to call this method\");\n";
     if (apiCall.auth === "SecretKey")
-        return tabbing + "if (PlayFabSettings.DeveloperSecretKey == null) throw new PlayFabException(PlayFabExceptionCode.DeveloperKeyNotSet,\"Must have PlayFabSettings.DeveloperSecretKey set to call this method\");\n";
-    return "";
+        output += tabbing + "if (PlayFabSettings.DeveloperSecretKey == null) throw new PlayFabException(PlayFabExceptionCode.DeveloperKeyNotSet,\"Must have PlayFabSettings.DeveloperSecretKey set to call this method\");\n";
+    return output;
 }
 
 function generateApiSummary(tabbing, apiElement, summaryParam, extraLines) {

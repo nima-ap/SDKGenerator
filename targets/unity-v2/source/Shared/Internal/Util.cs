@@ -85,5 +85,37 @@ namespace PlayFab.Internal
 
             return _sb.ToString();
         }
+
+        internal static string GetLocalSettingsFileProperty(string propertyKey)
+        {
+            string envFileContent = null;
+            
+            string envFileName = "playfab.local.settings.json";
+
+            string currDir = Directory.GetCurrentDirectory();
+            string currDirEnvFile = Path.Combine(currDir, envFileName);
+
+            if (File.Exists(currDirEnvFile))
+            {
+                envFileContent = ReadAllFileText(currDirEnvFile);
+            }
+            else
+            {
+                string tempDir = Path.GetTempPath();
+                string tempDirEnvFile = Path.Combine(tempDir, envFileName);
+
+                if (File.Exists(tempDirEnvFile))
+                {
+                    envFileContent = ReadAllFileText(tempDirEnvFile);
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(envFileContent))
+            {
+                JsonObject envJson = PlayFabSimpleJson.DeserializeObject<JsonObject>(envFileContent);
+                return envJson[propertyKey]?.ToString();
+            }
+            return string.Empty;
+        }
     }
 }

@@ -179,12 +179,30 @@ namespace PlayFab.Internal
             PluginManager.GetPlugin<ITransportPlugin>(PluginContract.PlayFab_Transport).SimplePostCall(fullUrl, payload, successCallback, errorCallback);
         }
 
+        protected internal static void MakeApiCall<TResult>(string apiEndpoint,
+            PlayFabRequestCommon request, AuthType authType, Action<TResult> resultCallback,
+            Action<PlayFabError> errorCallback, object customData = null, Dictionary<string, string> extraHeaders = null, bool allowQueueing = false)
+            where TResult : PlayFabResultCommon
+        {
+            
 
+            var fullUrl = PlayFabSettings.GetFullUrl(apiEndpoint, PlayFabSettings.RequestGetParams);
+            _MakeApiCall(apiEndpoint, fullUrl, request, authType, resultCallback, errorCallback, customData, extraHeaders, allowQueueing);
+        }
+
+        protected internal static void DebugApiCall<TResult>(string fullUri,
+            PlayFabRequestCommon request, AuthType authType, Action<TResult> resultCallback,
+            Action<PlayFabError> errorCallback, object customData = null, Dictionary<string, string> extraHeaders = null, bool allowQueueing = false)
+            where TResult : PlayFabResultCommon
+        {
+            // This will not be called if environment file does not exist or does not contain property the debugging URI
+            _MakeApiCall(null, fullUri, request, authType, resultCallback, errorCallback, customData, extraHeaders, allowQueueing);
+        }
 
         /// <summary>
         /// Internal method for Make API Calls
         /// </summary>
-        protected internal static void MakeApiCall<TResult>(string apiEndpoint,
+        private static void _MakeApiCall<TResult>(string apiEndpoint, string fullUrl,
             PlayFabRequestCommon request, AuthType authType, Action<TResult> resultCallback,
             Action<PlayFabError> errorCallback, object customData = null, Dictionary<string, string> extraHeaders = null, bool allowQueueing = false)
             where TResult : PlayFabResultCommon
@@ -196,7 +214,7 @@ namespace PlayFab.Internal
             var reqContainer = new CallRequestContainer
             {
                 ApiEndpoint = apiEndpoint,
-                FullUrl = PlayFabSettings.GetFullUrl(apiEndpoint, PlayFabSettings.RequestGetParams),
+                FullUrl = fullUrl,
                 CustomData = customData,
                 Payload = Encoding.UTF8.GetBytes(serializer.SerializeObject(request)),
                 ApiRequest = request,
