@@ -65,7 +65,7 @@ namespace PlayFab
             var file = await folder.GetFileAsync(filename);
             return await Windows.Storage.FileIO.ReadTextAsync(file);
         }
-#endif
+#endif        
     }
 }
 #endif

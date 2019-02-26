@@ -269,6 +269,13 @@ function getAuthParams(apiCall, isApiInstance = false) {
 }
 
 function getRequestActions(tabbing, apiCall, isApiInstance = false) {
+    if(apiCall.result === "ExecuteFunction")
+        return tabbing + "string debugUri = PlayFabUtil.GetLocalSettingsFileProperty(\"ExecuteFunctionDebugUri\");\n" +
+        tabbing + "if (!string.IsNullOrEmpty(debugUri))\n" +
+        tabbing + "{\n" +
+        tabbing + "    httpResult = await PlayFabHttp.DebugDoPost(debugUri, request," +  getAuthParams(apiCall) + ", extraHeaders);\n"
+        tabbing + "}\n"
+        tabbing + "else\n";
     if (apiCall.result === "LoginResult" || apiCall.request === "RegisterPlayFabUserRequest")
         return tabbing + "request.TitleId = PlayFabSettings.TitleId ?? request.TitleId;\n"
             + tabbing + "if (request.TitleId == null) throw new PlayFabException(PlayFabExceptionCode.TitleNotSet, \"Must be have PlayFabSettings.TitleId set to call this method\");\n";
