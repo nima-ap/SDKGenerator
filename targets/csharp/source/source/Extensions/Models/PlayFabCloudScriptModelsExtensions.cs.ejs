@@ -1,0 +1,61 @@
+﻿namespace PlayFab.CloudScriptModels
+{
+    public class FunctionExecutionContext<T>
+    {
+        public PlayFabApiSettings ApiSettings { get; private set; }
+
+        public ProfilesModels.EntityProfileBody CallerEntityProfile { get; set; }
+
+        public T FunctionArgument { get; set; }
+
+        protected FunctionExecutionContext() { }
+
+        public static async System.Threading.Tasks.Task<FunctionExecutionContext<T>> Create(System.Net.Http.HttpRequestMessage request)
+        {
+            string body = await request.Content.ReadAsStringAsync();
+            var contextInternal = Json.PlayFabSimpleJson.DeserializeObject<FunctionExecutionContextInternal>(body);
+            var settings = new PlayFabApiSettings
+            {
+                TitleId = contextInternal.TitleAuthentication.TitleId,
+                DeveloperSecretKey = contextInternal.TitleAuthentication.TitleSecretKey
+            };
+
+            // TODO: STATIC ENTITY TOKEN?
+            PlayFabSettings.staticPlayer.EntityToken = contextInternal.TitleAuthentication.TitleEntityToken;
+            return new FunctionExecutionContext<T>()
+            {
+                ApiSettings = settings,
+                CallerEntityProfile = contextInternal.CallerEntityProfile,
+                FunctionArgument = (T)contextInternal.FunctionArgument
+            };
+        }
+
+        private class FunctionExecutionContextInternal<V>
+        {
+            public TitleAuthentication TitleAuthentication { get; set; }
+
+            public ProfilesModels.EntityProfileBody CallerEntityProfile { get; set; }
+
+            public V FunctionArgument { get; set; }
+        }
+
+        private class FunctionExecutionContextInternal : FunctionExecutionContextInternal<object>
+        {
+        }
+
+        private class TitleAuthentication
+        {
+            public string TitleId { get; set; }
+            public string TitleSecretKey { get; set; }
+            public string TitleEntityToken { get; set; }
+        }
+    }
+
+    public class FunctionExecutionContext : FunctionExecutionContext<object>
+    {
+        public static async System.Threading.Tasks.Task<FunctionExecutionContext<T>> Create<T>(System.Net.Http.HttpRequestMessage request)
+        {
+            return await FunctionExecutionContext<T>.Create(request);
+        }
+    }
+}
