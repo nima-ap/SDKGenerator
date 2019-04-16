@@ -13,7 +13,7 @@
         public static async System.Threading.Tasks.Task<FunctionExecutionContext<T>> Create(System.Net.Http.HttpRequestMessage request)
         {
             string body = await request.Content.ReadAsStringAsync();
-            var contextInternal = Json.PlayFabSimpleJson.DeserializeObject<FunctionExecutionContextInternal>(body);
+            var contextInternal = Json.PlayFabSimpleJson.DeserializeObject<FunctionExecutionContextInternal<T>>(body);
             var settings = new PlayFabApiSettings
             {
                 TitleId = contextInternal.TitleAuthenticationContext.Id,
@@ -26,7 +26,7 @@
             {
                 ApiSettings = settings,
                 CallerEntityProfile = contextInternal.CallerEntityProfile,
-                FunctionArgument = (T)contextInternal.FunctionArgument
+                FunctionArgument = contextInternal.FunctionArgument
             };
         }
 
@@ -53,9 +53,5 @@
 
     public class FunctionExecutionContext : FunctionExecutionContext<object>
     {
-        public static async System.Threading.Tasks.Task<FunctionExecutionContext<T>> Create<T>(System.Net.Http.HttpRequestMessage request)
-        {
-            return await FunctionExecutionContext<T>.Create(request);
-        }
     }
 }
